@@ -2,16 +2,59 @@ upper_plate_radius = 19.75;
 screw_distance_from_center = 16.5;
 screw_hole_diameter = 6; // M3 head is usually 5.5mm
 ptfe_hole_diameter = 4.5;
-height = 12;
+height = 10;
 hotend_ptfe_diameter = 6.5;
 hotend_ptfe_protrusion = 3.7;
+extruder_gear_length = 11.1;
+extruder_gear_diameter = 12;
+extruder_idler_length = 16;
+extruder_idler_diameter = 13;
 HOLE_BUFFER_HEIGHT = 1;
+$fn = 100;
 
 extruder_support();
 
 module extruder_support() {
-    union() {
-        // Additional support to hold hotend ptfe protrusion
+    difference() {
+        union() {
+            hotend_ptfe_support(
+                hotend_ptfe_protrusion,
+                hotend_ptfe_diameter,
+                upper_plate_radius,
+                screw_hole_diameter,
+                screw_distance_from_center
+            );
+
+            translate([0, 0, hotend_ptfe_protrusion])
+                extruder_support_with_ptfe_hole(
+                    height,
+                    upper_plate_radius,
+                    screw_distance_from_center,
+                    screw_hole_diameter,
+                    ptfe_hole_diameter
+                );
+        }
+        union() {
+            // Dent for the extruder gear
+            translate([-5, 6, height + hotend_ptfe_protrusion + 4]) {
+                rotate([120, 90, 0]) {
+                    cylinder(h = extruder_gear_length, d = extruder_gear_diameter);
+                }
+            }
+            // Dent for the extruder idler
+            translate([11, 0, height + hotend_ptfe_protrusion + 4]) {
+                rotate([120, 90, 0]) {
+                    cylinder(h = extruder_idler_length, d = extruder_idler_diameter);
+                }
+            }
+        }
+
+    }
+}
+
+module hotend_ptfe_support(hotend_ptfe_protrusion, hotend_ptfe_diameter, upper_plate_radius, screw_hole_diameter, screw_distance_from_center) {
+    // Additional support to hold hotend ptfe protrusion
+    difference() {
         extruder_support_with_ptfe_hole(
             hotend_ptfe_protrusion,
             upper_plate_radius,
@@ -19,15 +62,11 @@ module extruder_support() {
             screw_hole_diameter,
             hotend_ptfe_diameter
         );
-
-        translate([0, 0, hotend_ptfe_protrusion])
-            extruder_support_with_ptfe_hole(
-                height,
-                upper_plate_radius,
-                screw_distance_from_center,
-                screw_hole_diameter,
-                ptfe_hole_diameter
-            );
+        translate([-((hotend_ptfe_diameter / 2) + 0.5), 0, -HOLE_BUFFER_HEIGHT]) {
+            rotate([0, 0, -30]) {
+                cube([hotend_ptfe_diameter, upper_plate_radius, hotend_ptfe_protrusion + HOLE_BUFFER_HEIGHT]);
+            }
+        }
     }
 }
 
